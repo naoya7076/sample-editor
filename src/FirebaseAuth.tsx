@@ -1,6 +1,8 @@
-import React, {useState, useEffect} from 'react';
-import {firebase, FirebaseContext} from './Firebase'
+import React, {useEffect, useState} from 'react';
 
+import { firebase, FirebaseContext } from './Firebase';
+
+//Firebase認証状態を取得するカスタムフック
 const useFirebaseAuth = () => {
     const [initialized, setInitialized] = useState(false);
     const [userId, setUserId] = useState<string | null>(null);
@@ -9,8 +11,8 @@ const useFirebaseAuth = () => {
         firebase.auth().onAuthStateChanged(async user => {
             setInitialized(true);
             setUserId(user ? user.uid : null);
-            setUserName(user ? user.displayName || ' ' : '');
-        })
+            setUserName(user ? user.displayName || '' : '');
+        });
     },[]);
     return {initialized, userId, userName}
 }
@@ -23,20 +25,20 @@ interface FirebaseAuthProps {
 export const FirebaseAuth: React.FC<FirebaseAuthProps> = ({
     children,
     NotSignedIn,
-    Loading
+    Loading,
 }) => {
     const {initialized, userId, userName} = useFirebaseAuth();
 
-    if (!initialized) {
+    if(!initialized) {
         return <Loading />;
-    } else if (!userId){
+    } else if (!userId) {
         return <NotSignedIn />;
     } else {
         return (
             <FirebaseContext.Provider
                 value={{userId, userName}}
                 children={children}
-                />
+            />
         );
     }
 };
@@ -47,5 +49,5 @@ export const signInWithRedirect = () => {
 };
 
 export const signOut = () => {
-    return firebase.auth().signOut();
-}
+    return firebase.auth().signOut;
+};
