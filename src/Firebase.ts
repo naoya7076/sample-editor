@@ -24,7 +24,7 @@ interface FirebaseContext {
 }
 
 /**
- * 先程宣言したFireBaseContextインターフェースを
+ * 宣言したFireBaseContextインターフェースを
  * ジェネリクスとしてFirebaseContextを生成している
  */
 export const FirebaseContext = React.createContext<FirebaseContext>({
