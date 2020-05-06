@@ -49,3 +49,73 @@ function useFetchDocument<T>(ref: database.Reference) {
     return { document, loaded };
 }
 
+export const useAllDocuments = () => {
+    const ref = useDocRef("documents");
+    return useFetchDocument<{[key:string]: Document }>(ref);
+};
+
+function useUpdateDocument<T = any>(ref: database.Reference) {
+    const [pending, setPending] = useState(false);
+    const timerRef = useRef<any>(undefined);
+    const mountedRef = useRef<boolean>(false);
+    useEffect(() => {
+        mountedRef.current = true;
+        return () => {
+            mountedRef.current = false;
+        };
+    },[]);
+
+    const updateDocument = useCallback(
+        (document: T) => {
+            if (timerRef.current !== undefined){
+            clearTimeout(timerRef.current);
+        }
+
+        timerRef.current = setTimeout(() => {
+            if (!mountedRef.current){
+                return;
+            }
+            setPending(true);
+            ref.set(document).then(() => {
+                setPending(false);
+            });
+            timerRef.current = undefined;
+        }, 500);
+    },
+    [ref]
+    );
+    return {pending, updateDocument};
+}
+
+export const useDatabaseDocument = (textId: string) => {
+    const ref = useDocRef(`documents/${textId}`);
+    const {document, loaded} = useFetchDocument(ref);
+    const [text, setText] = useState("");
+    const {pending, updateDocument} = useUpdateDocument(ref);
+
+    useEffect(() => {
+        let mounted = true;
+        if (mounted && document && "text" in document) {
+            setText(document.text);
+        }
+        return () => {
+            mounted = false;
+        };
+    }, [document]);
+
+    const updateText = useCallback(
+        (newText: string) => {
+            setText(newText);
+            const title = newText.split("\n")[0];
+            updateDocument({
+                textId,
+                text: newText,
+                title,
+                updatedAt: new Date()
+            });
+        },
+        [updateDocument, textId]
+    );
+
+    return {text, updateText, loaded, pending};
+};
